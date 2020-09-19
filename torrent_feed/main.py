@@ -16,4 +16,4 @@ if __name__ == '__main__':
     try:
         exit(main())
     except KeyboardInterrupt:
-        raise SystemExit(1)
+        raise SystemExit(130)
