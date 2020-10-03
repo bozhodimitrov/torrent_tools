@@ -1,7 +1,7 @@
 import argparse
 import json
 import re
-from collections import deque
+from collections import OrderedDict
 from functools import lru_cache
 from time import sleep
 
@@ -14,6 +14,33 @@ TORRENT_URL_PATTERN = re.compile(
     r'^(?P<href>http://.*/download\.php\?id=[a-z0-9]{30,40}\&'
     r'f=[a-zA-Z0-9%.-]{1,600}\.torrent&rsspid=[a-z0-9]{30,40})$',
 )
+
+
+class LRU(OrderedDict):
+    def __init__(self, maxsize=128, /, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __contains__(self, key):
+        found = super().__contains__(key)
+        if found:
+            self.move_to_end(key)
+        else:
+            self[key] = None
+        return found
+
+    def __getitem__(self, key):
+        self.move_to_end(key)
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        if super().__contains__(key):
+            self.move_to_end(key)
+        else:
+            super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]
 
 
 @lru_cache(maxsize=1)
@@ -29,8 +56,8 @@ def load_config(filename=CONFIG_FILE_PATH):
         raise SystemExit(1)
 
 
-def deque_limit():
-    return load_config().get('deque_limit')
+def cache_limit():
+    return load_config().get('cache_limit')
 
 
 def parser_config():
@@ -73,16 +100,12 @@ def tracker():
 
 
 def rss_feed(args):
-    last_torrents = deque((tid for tid, _, _ in tracker()), deque_limit())
+    last_torrents = LRU(cache_limit(), [(tid, None) for tid, *_ in tracker()])
 
     while True:
         sleep(5)
         for tid, title, url in tracker():
-            if tid in last_torrents:
-                continue
-
-            last_torrents.append(tid)
-            if not title or not url:
+            if tid in last_torrents or not title or not url:
                 continue
             elif args.url:
                 print(f'{title}\n{url}')
