@@ -113,7 +113,7 @@ def rss_feed(args):
                 print(title)
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(prog='xbtit_feed')
     parser.add_argument(
         '-V',
@@ -126,8 +126,12 @@ def main():
     rss_feed(args)
 
 
-if __name__ == '__main__':
+def main():
     try:
-        exit(main())
+        exit(_main())
     except KeyboardInterrupt:
         raise SystemExit(130)
+
+
+if __name__ == '__main__':
+    main()
