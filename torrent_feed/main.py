@@ -1,6 +1,7 @@
 import argparse
 import json
 import re
+import urllib
 from collections import OrderedDict
 from functools import lru_cache
 from time import sleep
@@ -85,13 +86,18 @@ def extract_url(enclosures):
 
 
 def tracker():
-    rss = feedparser.parse(**parser_config())
+    try:
+        rss = feedparser.parse(**parser_config())
+    except urllib.error.URLError:
+        print('Retrying ...')
+        return
+
     if rss.status != 200 or rss.bozo != 0:
         print(f'Bad status {rss.status}, bozo {rss.bozo}')
         print(f'Bad {rss.bozo_exception}')
         return
 
-    for entry in rss.entries:
+    for entry in reversed(rss.entries):
         yield (
             entry.id,
             extract_title(entry.title),
