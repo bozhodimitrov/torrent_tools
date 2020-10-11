@@ -114,9 +114,9 @@ def rss_feed(args):
             if tid in last_torrents or not title or not url:
                 continue
             elif args.url:
-                print(f'{title}\n{url}')
+                print(f'{title}\n{url}', flush=True)
             else:
-                print(title)
+                print(title, flush=True)
 
 
 def _main():
