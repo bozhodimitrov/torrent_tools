@@ -92,7 +92,7 @@ def print_to_stderr(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         with redirect_stdout(stderr):
-            return func(*args, **kwargs)
+            yield from func(*args, **kwargs)
 
     return wrapper
 
