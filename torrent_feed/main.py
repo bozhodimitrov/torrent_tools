@@ -3,7 +3,10 @@ import json
 import re
 import urllib
 from collections import OrderedDict
+from contextlib import redirect_stdout
 from functools import lru_cache
+from functools import wraps
+from sys import stderr
 from time import sleep
 
 import feedparser
@@ -18,7 +21,7 @@ TORRENT_URL_PATTERN = re.compile(
 
 
 class LRU(OrderedDict):
-    def __init__(self, maxsize=128, /, *args, **kwds):
+    def __init__(self, maxsize=128, *args, **kwds):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 
@@ -85,6 +88,16 @@ def extract_url(enclosures):
         print(f'Bad URL {enclosures[0].href}')
 
 
+def print_to_stderr(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with redirect_stdout(stderr):
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+@print_to_stderr
 def tracker():
     try:
         rss = feedparser.parse(**parser_config())
