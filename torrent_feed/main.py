@@ -5,8 +5,8 @@ import urllib
 from collections import OrderedDict
 from contextlib import redirect_stdout
 from functools import lru_cache
-from functools import wraps
 from sys import stderr
+from sys import stdout
 from time import sleep
 
 import feedparser
@@ -88,16 +88,6 @@ def extract_url(enclosures):
         print(f'Bad URL {enclosures[0].href}')
 
 
-def print_to_stderr(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with redirect_stdout(stderr):
-            yield from func(*args, **kwargs)
-
-    return wrapper
-
-
-@print_to_stderr
 def tracker():
     try:
         rss = feedparser.parse(**parser_config())
@@ -127,9 +117,9 @@ def rss_feed(args):
             if tid in last_torrents or not title or not url:
                 continue
             elif args.url:
-                print(f'{title}\n{url}', flush=True)
+                print(f'{title}\n{url}', file=stdout, flush=True)
             else:
-                print(title, flush=True)
+                print(title, file=stdout, flush=True)
 
 
 def _main():
@@ -142,7 +132,9 @@ def _main():
     )
     parser.add_argument('-u', '--url', action='store_true')
     args = parser.parse_args()
-    rss_feed(args)
+
+    with redirect_stdout(stderr):
+        rss_feed(args)
 
 
 def main():
