@@ -1,15 +1,16 @@
 import argparse
-import json
 import re
 import urllib
-from collections import OrderedDict
 from contextlib import redirect_stdout
-from functools import lru_cache
 from sys import stderr
 from sys import stdout
 from time import sleep
 
 import feedparser
+
+from utils.cache import LRU
+from utils.config import cache_limit
+from utils.config import parser_config
 
 
 CONFIG_FILE_PATH = 'config.json'
@@ -18,54 +19,6 @@ TORRENT_URL_PATTERN = re.compile(
     r'^(?P<href>http://.*/download\.php\?id=[a-z0-9]{30,40}\&'
     r'f=[a-zA-Z0-9%.-]{1,600}\.torrent&rsspid=[a-z0-9]{30,40})$',
 )
-
-
-class LRU(OrderedDict):
-    def __init__(self, maxsize=128, *args, **kwds):
-        self.maxsize = maxsize
-        super().__init__(*args, **kwds)
-
-    def __contains__(self, key):
-        found = super().__contains__(key)
-        if found:
-            self.move_to_end(key)
-        else:
-            self[key] = None
-        return found
-
-    def __getitem__(self, key):
-        self.move_to_end(key)
-        return super().__getitem__(key)
-
-    def __setitem__(self, key, value):
-        if super().__contains__(key):
-            self.move_to_end(key)
-        else:
-            super().__setitem__(key, value)
-        if len(self) > self.maxsize:
-            oldest = next(iter(self))
-            del self[oldest]
-
-
-@lru_cache(maxsize=1)
-def load_config(filename=CONFIG_FILE_PATH):
-    try:
-        with open(filename) as json_config_file:
-            return json.load(json_config_file)
-    except FileNotFoundError:
-        print('Configuration file missing')
-        raise SystemExit(1)
-    except json.decoder.JSONDecodeError:
-        print('Configuration file decoding error')
-        raise SystemExit(1)
-
-
-def cache_limit():
-    return load_config().get('cache_limit')
-
-
-def parser_config():
-    return load_config().get('parser')
 
 
 def extract_title(title):
