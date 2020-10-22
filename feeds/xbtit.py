@@ -13,7 +13,6 @@ from utils.config import cache_limit
 from utils.config import parser_config
 
 
-CONFIG_FILE_PATH = 'config.json'
 TITLE_PATTERN = re.compile(r'\[.*?\] (?P<title>.*?) \[SEEDERS.*\]')
 TORRENT_URL_PATTERN = re.compile(
     r'^(?P<href>http://.*/download\.php\?id=[a-z0-9]{30,40}\&'
