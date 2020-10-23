@@ -74,7 +74,12 @@ async def tracker(session):
         if resp.status != 200:
             return
 
-        for torrent_info in extractor(await resp.text()):
+        try:
+            html = await resp.text()
+        except TimeoutError:
+            return
+
+        for torrent_info in extractor(html):
             yield torrent_info
 
 
