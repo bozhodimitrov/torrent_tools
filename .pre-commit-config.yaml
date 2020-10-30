@@ -6,7 +6,6 @@ repos:
     -   id: debug-statements
     -   id: double-quote-string-fixer
     -   id: end-of-file-fixer
-    -   id: requirements-txt-fixer
     -   id: trailing-whitespace
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.3
