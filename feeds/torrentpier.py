@@ -16,6 +16,7 @@ from aiohttp import ClientOSError
 from aiohttp import ClientPayloadError
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
+from aiohttp import InvalidURL
 from aiohttp import TCPConnector
 from lxml.etree import ParserError
 from lxml.etree import XMLSyntaxError
@@ -34,6 +35,14 @@ NAME_PATH = "string(descendant::td[contains(@class, 'tLeft')]/"\
 
 LINK_PATH = "string(descendant::td[contains(@class, 'small')]/"\
     "a[@title='Download' or contains(@class, 'tr-dl')]/@href)"
+
+HTTP_EXCEPTIONS = (
+    ClientOSError,
+    ClientPayloadError,
+    InvalidURL,
+    OSError,
+    TimeoutError,
+)
 
 
 @lru_cache(maxsize=1)
@@ -65,7 +74,7 @@ def tracker_url():
 async def tracker(session):
     try:
         resp = await session.get(tracker_url(), allow_redirects=False)
-    except (ClientOSError, ClientPayloadError, OSError, TimeoutError) as e:
+    except HTTP_EXCEPTIONS as e:
         if isinstance(e, OSError) and e.errno != ECONNRESET:
             print(f'Connection error: {str(e)}')
         return
