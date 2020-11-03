@@ -3,15 +3,13 @@ from asyncio import get_event_loop
 from asyncio import get_running_loop
 from asyncio import sleep as asleep
 from asyncio import TimeoutError
-from contextlib import redirect_stdout
 from errno import ECONNRESET
 from functools import lru_cache
 from signal import SIGINT
 from signal import signal
-from sys import stderr
-from sys import stdout
 from urllib.parse import urljoin
 
+from aioconsole.stream import aprint
 from aiohttp import ClientOSError
 from aiohttp import ClientPayloadError
 from aiohttp import ClientSession
@@ -76,7 +74,7 @@ async def tracker(session):
         resp = await session.get(tracker_url(), allow_redirects=False)
     except HTTP_EXCEPTIONS as e:
         if isinstance(e, OSError) and e.errno != ECONNRESET:
-            print(f'Connection error: {str(e)}')
+            await aprint(f'Connection error: {str(e)}', use_stderr=True)
         return
 
     async with resp:
@@ -111,13 +109,13 @@ async def http_feed(args):
         )
 
         if not seen_urls:
-            print('Expired credentials')
+            raise SystemExit('Expired credentials')
             return
 
         while True:
             async for torrent, url in tracker(session):
                 if url not in seen_urls:
-                    print(f'{torrent}\n{url}', file=stdout, flush=True)
+                    await aprint(f'{torrent}\n{url}', flush=True)
 
             await asleep(config['interval'])
 
@@ -138,8 +136,7 @@ async def _main():
     parser.add_argument('-u', '--url', action='store_true')
     args = parser.parse_args()
 
-    with redirect_stdout(stderr):
-        await http_feed(args)
+    await http_feed(args)
 
 
 def _shutdown_handler(signal, frame):

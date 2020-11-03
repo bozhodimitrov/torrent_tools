@@ -6,7 +6,7 @@ from aioconsole.stream import get_standard_streams
 
 
 async def torrent_feed(args):
-    reader, writer = await get_standard_streams()
+    reader, _ = await get_standard_streams()
     while True:
         try:
             name, url = await reader.__anext__(), await reader.__anext__()
@@ -14,11 +14,7 @@ async def torrent_feed(args):
             break
 
         if args.just_print:
-            await aprint(
-                f'{name.decode()}{url.decode()}',
-                streams=(reader, writer),
-                end='',
-            )
+            await aprint(f'{name.decode()}{url.decode()}', end='')
 
 
 def _main():
@@ -33,11 +29,7 @@ def _main():
     args = parser.parse_args()
 
     loop = get_event_loop()
-    try:
-        loop.run_until_complete(torrent_feed(args))
-    finally:
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
+    loop.run_until_complete(torrent_feed(args))
 
 
 def main():
