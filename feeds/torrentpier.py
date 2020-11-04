@@ -23,7 +23,9 @@ from lxml.html import HTMLParser
 
 from utils.cache import LRU
 from utils.config import cache_limit
-from utils.config import parser_config
+from utils.config import http_cookies
+from utils.config import timeout_interval
+from utils.config import tracker_url
 
 
 CONTENT_PATH = "descendant-or-self::tr[contains(@class, 'hl-tr')]"
@@ -63,15 +65,6 @@ async def extractor(html):
             yield name.strip(), urljoin(tracker_url(), link.strip())
 
 
-@lru_cache(maxsize=1)
-def tracker_url():
-    url = parser_config().get('url')
-    if not url:
-        raise SystemExit('Invalid tracker url')
-    else:
-        return url
-
-
 async def tracker(session):
     try:
         resp = await session.get(tracker_url(), allow_redirects=False)
@@ -96,14 +89,13 @@ async def tracker(session):
 async def http_feed(args):
     get_event_loop().create_task(_wakeup())
 
-    config = parser_config()
     options = dict(
-        cookies=config['cookies'],
+        cookies=http_cookies(),
         connector=TCPConnector(
             keepalive_timeout=299,
             enable_cleanup_closed=True,
         ),
-        timeout=ClientTimeout(total=config['interval']),
+        timeout=ClientTimeout(total=timeout_interval()),
     )
 
     async with ClientSession(**options) as session:
@@ -119,7 +111,7 @@ async def http_feed(args):
                 if url not in seen_urls:
                     await aprint(f'{torrent}\n{url}')
 
-            await asleep(config['interval'])
+            await asleep(timeout_interval())
 
 
 async def _wakeup():
