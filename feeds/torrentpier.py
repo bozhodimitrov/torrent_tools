@@ -1,10 +1,10 @@
 import argparse
 from asyncio import get_event_loop
-from asyncio import get_running_loop
 from asyncio import sleep as asleep
 from asyncio import TimeoutError
 from errno import ECONNRESET
 from functools import lru_cache
+from functools import partial
 from signal import SIGINT
 from signal import signal
 from urllib.parse import urljoin
@@ -48,9 +48,12 @@ def parser():
     return HTMLParser(collect_ids=False)
 
 
-def extractor(html):
+async def extractor(html):
+    loop = get_event_loop()
     try:
-        root = fromstring(html, parser=parser())
+        root = await loop.run_in_executor(
+            None, partial(fromstring, html, parser=parser()),
+        )
     except (ParserError, XMLSyntaxError):
         return
 
@@ -86,12 +89,12 @@ async def tracker(session):
         except TimeoutError:
             return
 
-        for torrent_info in extractor(html):
+        async for torrent_info in extractor(html):
             yield torrent_info
 
 
 async def http_feed(args):
-    get_running_loop().create_task(_wakeup())
+    get_event_loop().create_task(_wakeup())
 
     config = parser_config()
     options = dict(
@@ -110,7 +113,6 @@ async def http_feed(args):
 
         if not seen_urls:
             raise SystemExit('Expired credentials')
-            return
 
         while True:
             async for torrent, url in tracker(session):
