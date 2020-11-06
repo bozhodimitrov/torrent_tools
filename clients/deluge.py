@@ -48,7 +48,7 @@ async def torrent_feed(args, encoding='utf-8'):
             await torrent_download(name, url)
 
 
-def _main():
+async def _main():
     parser = argparse.ArgumentParser(prog='deluge-dl')
     parser.add_argument(
         '-V',
@@ -59,16 +59,16 @@ def _main():
     parser.add_argument('--just-print', action='store_true')
     args = parser.parse_args()
 
-    loop = get_event_loop()
-    loop.run_until_complete(torrent_feed(args))
+    await torrent_feed(args)
 
 
 def main():
+    loop = get_event_loop()
     try:
-        exit(_main())
+        loop.run_until_complete(_main())
     except KeyboardInterrupt:
         raise SystemExit(130)
 
 
 if __name__ == '__main__':
-    main()
+    exit(main())

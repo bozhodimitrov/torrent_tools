@@ -5,8 +5,6 @@ from asyncio import TimeoutError
 from errno import ECONNRESET
 from functools import lru_cache
 from functools import partial
-from signal import SIGINT
-from signal import signal
 from urllib.parse import urljoin
 
 from aioconsole.stream import aprint
@@ -36,6 +34,8 @@ NAME_PATH = "string(descendant::td[contains(@class, 'tLeft')]/"\
 LINK_PATH = "string(descendant::td[contains(@class, 'small')]/"\
     "a[@title='Download' or contains(@class, 'tr-dl')]/@href)"
 
+COOLDOWN = timeout_interval() * 10
+
 HTTP_EXCEPTIONS = (
     ClientOSError,
     ClientPayloadError,
@@ -59,7 +59,12 @@ async def extractor(html):
     except (ParserError, XMLSyntaxError):
         return
 
-    for tag in reversed(root.xpath(CONTENT_PATH)):
+    content = root.xpath(CONTENT_PATH)
+    if not content:
+        await asleep(COOLDOWN)
+        return
+
+    for tag in reversed(content):
         name, link = tag.xpath(NAME_PATH), tag.xpath(LINK_PATH)
         if name and link:
             yield name.strip(), urljoin(tracker_url(), link.strip())
@@ -87,8 +92,6 @@ async def tracker(session):
 
 
 async def http_feed(args):
-    get_event_loop().create_task(_wakeup())
-
     options = dict(
         cookies=http_cookies(),
         connector=TCPConnector(
@@ -114,11 +117,6 @@ async def http_feed(args):
             await asleep(timeout_interval())
 
 
-async def _wakeup():
-    while True:
-        await asleep(1)
-
-
 async def _main():
     parser = argparse.ArgumentParser(prog='torrentpier_feed')
     parser.add_argument(
@@ -133,18 +131,13 @@ async def _main():
     await http_feed(args)
 
 
-def _shutdown_handler(signal, frame):
-    raise KeyboardInterrupt
-
-
 def main():
-    signal(SIGINT, _shutdown_handler)
     loop = get_event_loop()
     try:
-        exit(loop.run_until_complete(_main()))
+        loop.run_until_complete(_main())
     except KeyboardInterrupt:
         raise SystemExit(130)
 
 
 if __name__ == '__main__':
-    main()
+    exit(main())
