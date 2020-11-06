@@ -1,5 +1,6 @@
 import json
 from functools import lru_cache
+from shutil import disk_usage
 
 
 CONFIG_FILE_PATH = 'config.json'
@@ -48,3 +49,7 @@ def tracker_url():
         raise SystemExit('Invalid or missing tracker url')
     else:
         return url
+
+
+def free_space(dir_path):
+    return disk_usage(dir_path).free
