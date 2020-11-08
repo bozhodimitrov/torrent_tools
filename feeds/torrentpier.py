@@ -117,7 +117,7 @@ async def http_feed(args):
             await asleep(timeout_interval())
 
 
-async def _main():
+async def _main(argv=None):
     parser = argparse.ArgumentParser(prog='torrentpier_feed')
     parser.add_argument(
         '-V',
@@ -126,7 +126,7 @@ async def _main():
         version='%(prog)s 0.0.1',
     )
     parser.add_argument('-u', '--url', action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     await http_feed(args)
 

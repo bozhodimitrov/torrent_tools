@@ -48,7 +48,7 @@ async def torrent_feed(args, encoding='utf-8'):
             await torrent_download(name, url)
 
 
-async def _main():
+async def _main(argv=None):
     parser = argparse.ArgumentParser(prog='deluge-dl')
     parser.add_argument(
         '-V',
@@ -57,7 +57,7 @@ async def _main():
         version='%(prog)s 0.0.1',
     )
     parser.add_argument('--just-print', action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     await torrent_feed(args)
 
