@@ -12,11 +12,9 @@ def load_config(filename=CONFIG_FILE_PATH):
         with open(filename) as json_config_file:
             return json.load(json_config_file)
     except FileNotFoundError:
-        print('Configuration file missing')
-        raise SystemExit(1)
+        raise SystemExit('Configuration file missing')
     except json.decoder.JSONDecodeError:
-        print('Configuration file decoding error')
-        raise SystemExit(1)
+        raise SystemExit('Configuration file decoding error')
 
 
 def cache_limit():
