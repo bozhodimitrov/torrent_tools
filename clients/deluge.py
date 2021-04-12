@@ -37,12 +37,12 @@ async def torrent_feed(args, encoding='utf-8'):
     reader, _ = await get_standard_streams()
     while True:
         try:
-            name, url = await reader.__anext__(), await reader.__anext__()
+            torrent = (await reader.__anext__()).decode(encoding)
         except StopAsyncIteration:
             break
 
-        name, url = name.decode(encoding), url.decode(encoding)
-        await aprint(f'{name}{url}', end='')
+        name, url = torrent.strip().split('\0')
+        await aprint(f'{name}\n{url}')
 
         if not args.just_print:
             await torrent_download(name, url)

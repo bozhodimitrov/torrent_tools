@@ -112,7 +112,7 @@ async def http_feed(args):
         while True:
             async for torrent, url in tracker(session):
                 if url not in seen_urls:
-                    await aprint(f'{torrent}\n{url}')
+                    await aprint(f'{torrent}\0{url}')
 
             await asleep(timeout_interval())
 
